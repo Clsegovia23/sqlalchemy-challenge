@@ -1,4 +1,35 @@
+import numpy as np
+import pandas as pd
+import datetime as dt
+import sqlalchemy
+from sqlalchemy.ext.automap import automap_base
+from sqlalchemy.orm import Session
+from sqlalchemy import create_engine, func
 from flask import Flask, jsonify
+
+
+# create engine to hawaii.sqlite
+engine = create_engine("sqlite:///./Instructions/Resources/hawaii.sqlite")
+conn = engine.connect()
+
+# reflect an existing database into a new model
+Base = automap_base()
+
+# reflect the tables
+
+Base.prepare(conn, reflect=True)
+
+# View all of the classes that automap found
+Base.classes.keys()
+
+# Save references to each table
+Measurement = Base.classes.measurement
+Station = Base.classes.station
+
+# Create our session (link) from Python to the DB
+session = Session(engine)
+
+
 
 app = Flask(__name__)
 
@@ -27,7 +58,7 @@ def precipitation():
                        filter(Measurement.date >= year_ago).\
                        order_by(Measurement.date).all())
     
-    precipitation = {date: prcp for date, prcp in past_temp}
+    precipitation = {date: prcp for date, prcp in historical_temps}
     return jsonify(precipitation)
 
 # /api/v1.0/stations
@@ -63,19 +94,21 @@ def tobs():
 
 @app.route("/api/v1.0/<start>")
 def start(start=None):
-#     start = Measurement.date <= "2010-01-01"
-#     end = Measurement.date >= "2017-08-23"
+    #start = Measurement.date <= "2010-01-01"
+    #end = Measurement.date >= "2017-08-23"
         
     tobs_stats = (session.query(Measurement.tobs).\
                  filter(Measurement.date.between(start, "2017-08-23")).all())
     
-    tobs_df = pd.DataFrame(tobs_stats)
-    
+    tobs_df = pd.DataFrame(tobs_stats, columns=["tobs"])
+ 
     tmin = tobs_df["tobs"].min()
     tavg = tobs_df["tobs"].mean()
     tmax = tobs_df["tobs"].max()
-    
+    print(tmin, tavg, tmax)
+    print(tobs_df)    
     return jsonify(tmin, tavg, tmax)
+
 
 # Return a JSON list of the minimum temperature, the average temperature, and the max temperature 
 # for a given start or start-end range.
@@ -83,18 +116,19 @@ def start(start=None):
 
 @app.route("/api/v1.0/<start>/<end>")
 def startend(start=None, end=None):
-#     start = Measurement.date <= "2010-01-01"
-#     end = Measurement.date >= "2017-08-23"
+     start = Measurement.date <= "2010-01-01"
+     end = Measurement.date >= "2017-08-23"
 
     tobs_stats = (session.query(Measurement.tobs).\
                  filter(Measurement.date.between(start, end)).all())
     
-    tobs_df = pd.DataFrame(tobs_stats)
+    tobs_all_df = pd.DataFrame(tobs_stats, columns=["tobs"])
     
     tmin = tobs_df["tobs"].min()
     tavg = tobs_df["tobs"].mean()
     tmax = tobs_df["tobs"].max()
-    
+    print(tmin, tavg, tmax)
+    print(tobs_all_df)    
     return jsonify(tmin, tavg, tmax)
 
 if __name__ == "__main__":
