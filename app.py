@@ -116,19 +116,19 @@ def start(start=None):
 
 @app.route("/api/v1.0/<start>/<end>")
 def startend(start=None, end=None):
-     start = Measurement.date <= "2010-01-01"
-     end = Measurement.date >= "2017-08-23"
+    start = Measurement.date <= "2010-01-01"
+    end = Measurement.date >= "2017-08-23"
 
     tobs_stats = (session.query(Measurement.tobs).\
                  filter(Measurement.date.between(start, end)).all())
     
     tobs_all_df = pd.DataFrame(tobs_stats, columns=["tobs"])
     
-    tmin = tobs_df["tobs"].min()
-    tavg = tobs_df["tobs"].mean()
-    tmax = tobs_df["tobs"].max()
+    tmin = tobs_all_df["tobs"].min()
+    tavg = tobs_all_df["tobs"].mean()
+    tmax = tobs_all_df["tobs"].max()
     print(tmin, tavg, tmax)
-    print(tobs_all_df)    
+    print(tobs_all_df)
     return jsonify(tmin, tavg, tmax)
 
 if __name__ == "__main__":
